@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gelişmiş Animasyon</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            position: relative;
+        }
+        .heart-container {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+        }
+        
+        #heart-top-left {
+            top: 20px;
+            left: 20px;
+        }
+        #heart-top-right {
+            top: 20px;
+            right: 20px;
+        }
+        #heart-bottom-left {
+            bottom: 20px;
+            left: 20px;
+        }
+        #heart-bottom-right {
+            bottom: 20px;
+            right: 20px;
+        }
+
+        canvas {
+            position: absolute;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="flowerCanvas"></canvas>
+    <div id="heart-top-left" class="heart-container">
+        <canvas id="kalpCanvasTopLeft"></canvas>
+    </div>
+    <div id="heart-top-right" class="heart-container">
+        <canvas id="kalpCanvasTopRight"></canvas>
+    </div>
+    <div id="heart-bottom-left" class="heart-container">
+        <canvas id="kalpCanvasBottomLeft"></canvas>
+    </div>
+    <div id="heart-bottom-right" class="heart-container">
+        <canvas id="kalpCanvasBottomRight"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('flowerCanvas');
+        const ctx = canvas.getContext('2d');
+        let animationFrame = null;
+        let flowerData = [];
+        const particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+         function initFlowers(canvasWidth, canvasHeight) {
+           return [
+                { x: canvasWidth / 2 - 200, y: canvasHeight + 300, targetY: canvasHeight - canvasHeight / 3 , color1: "#e0f7fa", color2:"#00ff9a", angle: 0, leafY1: canvasHeight + 300, leafY2: canvasHeight + 300 , leafAngle1:0, leafAngle2:0 },
+                { x: canvasWidth / 2, y: canvasHeight + 300, targetY: canvasHeight - canvasHeight / 3, color1: "#e0f7fa", color2:"#00ff9a", angle: 0, leafY1: canvasHeight + 300, leafY2: canvasHeight + 300, leafAngle1:0 ,leafAngle2:0 },
+                { x: canvasWidth / 2 + 200, y: canvasHeight + 300, targetY: canvasHeight - canvasHeight / 3, color1: "#e0f7fa", color2:"#00ff9a", angle: 0, leafY1: canvasHeight + 300, leafY2: canvasHeight + 300,leafAngle1:0,leafAngle2:0}
+             ];
+         }
+
+
+        function drawFlower(x, y, scale, color1, color2, angle, leafY1, leafY2,leafAngle1,leafAngle2) {
+            const stemHeight = 150 * scale;
+            const leafHeight = 20 * scale;
+            const leafWidth = 20 * scale;
+            const flowerTopRadius = 30 * scale;
+
+           //gövde
+             ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.strokeStyle = color2;
+            ctx.lineWidth = 2;
+            ctx.lineTo(x, y - stemHeight);
+            ctx.stroke();
+
+
+          // Çiçek Üst Kısım
+            ctx.fillStyle = color1;
+            ctx.beginPath();
+            ctx.moveTo(x, y - stemHeight);
+            ctx.bezierCurveTo(
+            x - flowerTopRadius, y - stemHeight - flowerTopRadius / 2,
+            x - flowerTopRadius / 2, y - stemHeight - flowerTopRadius,
+            x, y - stemHeight - flowerTopRadius,
+            );
+           ctx.bezierCurveTo(
+           x + flowerTopRadius / 2, y - stemHeight - flowerTopRadius,
+           x + flowerTopRadius, y - stemHeight - flowerTopRadius / 2,
+           x, y - stemHeight,
+          );
+           ctx.fill();
+
+         // Yaprak uçları
+            ctx.fillStyle="lime";
+             ctx.save();
+             ctx.translate(x, y-stemHeight);
+            ctx.rotate(leafAngle1 * Math.PI / 180);
+             ctx.translate(-x, -(y-stemHeight));
+             ctx.beginPath();
+            ctx.ellipse(x - leafWidth/2, leafY1 - stemHeight, leafWidth, leafHeight, 0, 0, Math.PI * 2);
+             ctx.fill();
+          
+            ctx.restore();
+            
+            ctx.save();
+             ctx.translate(x, y-stemHeight);
+            ctx.rotate(leafAngle2 * Math.PI / 180);
+             ctx.translate(-x, -(y-stemHeight));
+            
+            ctx.beginPath();
+            ctx.ellipse(x + leafWidth/2, leafY2 - stemHeight, leafWidth, leafHeight, 0, 0, Math.PI * 2);
+             ctx.fill();
+            ctx.restore();
+
+        }
+
+        function createParticles() {
+            for (let i = 0; i < 200; i++) {
+               particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 1.5,
+                 speedX: (Math.random() - 0.5) * 0.4,
+                 speedY: (Math.random() - 0.5) * 0.4,
+                });
+            }
+         }
+          createParticles()
+          function drawParticles(){
+              ctx.fillStyle = "purple"
+            for (const particle of particles) {
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+               ctx.fill();
+                 particle.x += particle.speedX;
+                particle.y += particle.speedY;
+                
+              if(particle.x > canvas.width){
+                   particle.x=0;
+               }
+                 if(particle.x < 0){
+                    particle.x = canvas.width;
+                }
+                
+                if(particle.y > canvas.height){
+                    particle.y=0;
+                }
+                if(particle.y< 0){
+                    particle.y=canvas.height;
+                }
+            }
+        }
+
+       function drawFlowers() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (const flower of flowerData) {
+                if (flower.y > flower.targetY) {
+                  flower.y -= 2;
+                   flower.leafY1 -= 2;
+                    flower.leafY2 -= 2;
+                    flower.angle += 0.1
+                    flower.leafAngle1 +=0.4
+                    flower.leafAngle2 -= 0.4
+                    drawFlower(flower.x, flower.y, 2, flower.color1, flower.color2, flower.angle, flower.leafY1, flower.leafY2,flower.leafAngle1,flower.leafAngle2);
+                } else {
+                    drawFlower(flower.x, flower.targetY, 2, flower.color1, flower.color2, flower.angle, flower.leafY1, flower.leafY2,flower.leafAngle1,flower.leafAngle2);
+                 }
+            }
+              drawParticles();
+            animationFrame = requestAnimationFrame(drawFlowers);
+        }
+
+        const kalpCanvasIds = ["kalpCanvasTopLeft", "kalpCanvasTopRight", "kalpCanvasBottomLeft", "kalpCanvasBottomRight"];
+        const heartContainers = {
+            kalpCanvasTopLeft: document.getElementById('heart-top-left'),
+            kalpCanvasTopRight: document.getElementById('heart-top-right'),
+            kalpCanvasBottomLeft: document.getElementById('heart-bottom-left'),
+            kalpCanvasBottomRight: document.getElementById('heart-bottom-right'),
+        };
+        const kalpCanvases = {};
+        kalpCanvasIds.forEach(id => {
+            kalpCanvases[id] = document.getElementById(id);
+            kalpCanvases[id].width = 100;
+            kalpCanvases[id].height = 100;
+        });
+        const kalpCtxs = {};
+        kalpCanvasIds.forEach(id => {
+            kalpCtxs[id] = kalpCanvases[id].getContext('2d');
+        });
+        function drawKalpFrame(ctx, centerX, centerY) {
+            const scale = 3;
+            let i = 0;
+            const totalIterations = 2500;
+           function xt(t) {
+                return 16 * Math.pow(Math.sin(t), 3);
+            }
+            function yt(t) {
+                return 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+            }
+            function draw() {
+                if (i >= totalIterations) {
+                    return;
+                }
+                const x = xt(i) * scale;
+                const y = yt(i) * scale;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(centerX + x, centerY - y);
+                ctx.strokeStyle = 'red';
+                ctx.stroke();
+                i++;
+                requestAnimationFrame(draw);
+            }
+            draw()
+        }
+         kalpCanvasIds.forEach(id => {
+           drawKalpFrame(kalpCtxs[id], kalpCanvases[id].width / 2, kalpCanvases[id].height / 2)
+        });
+
+        resizeCanvas();
+        flowerData = initFlowers(canvas.width, canvas.height);
+        drawFlowers();
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            flowerData = initFlowers(canvas.width, canvas.height);
+            cancelAnimationFrame(animationFrame);
+            drawFlowers();
+         });
+    </script>
+</body>
+</html>
